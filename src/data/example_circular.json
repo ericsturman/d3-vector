@@ -5,37 +5,44 @@
     {
       "start": 100,
       "stop": 1500,
-      "name": "promoter"
+      "name": "promoter",
+      "orientation": "sense"
     },
     {
       "start": 1600,
       "stop": 3200,
-      "name": "coding_region"
+      "name": "coding_region",
+      "orientation": "sense"
     },
     {
       "start": 3300,
       "stop": 4000,
-      "name": "terminator"
+      "name": "terminator",
+      "orientation": "antisense"
     },
     {
       "start": 4100,
       "stop": 5500,
-      "name": "origin"
+      "name": "origin",
+      "orientation": "antisense"
     },
     {
       "start": 6600,
       "stop": 7200,
-      "name": "resistance"
+      "name": "resistance",
+      "orientation": "sense"
     },
     {
       "start": 8300,
       "stop": 10023,
-      "name": "1234"
+      "name": "1234",
+      "orientation": "antisense"
     },
     {
       "start": 11055,
       "stop": 12250,
-      "name": "misc"
+      "name": "misc",
+      "orientation": "sense"
     }
   ]
 }

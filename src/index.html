@@ -8,6 +8,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
+    <button id="downloadBtn" style="position: absolute; top: 10px; right: 10px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; z-index: 1000;">Download PNG</button>
     <div id="visualization"></div>
     <script>
         // Load data from JSON file
@@ -61,15 +62,35 @@
             // Calculate angles based on start and stop positions (starting from top, going counter-clockwise)
             const startFraction = feature.start / data.length;
             const stopFraction = feature.stop / data.length;
-            const startAngle = startFraction * 2 * Math.PI; // Counter-clockwise from top
-            const stopAngle = stopFraction * 2 * Math.PI;
+            const startAngleRaw = startFraction * 2 * Math.PI; // Counter-clockwise from top
+            const stopAngleRaw = stopFraction * 2 * Math.PI;
+
+            // Fixed arrowhead size for all features
+            const arrowSize = 12;
+            const arrowBaseDistance = arrowSize * 0.4;
             
+            // Calculate how much angle the arrowhead takes up
+            const arrowAngleDelta = arrowSize / (arcRadius * 2 * Math.PI) * 2 * Math.PI;
+
+            // Arc needs to make room for arrowhead within feature span
+            let arcStart, arcEnd;
+            if (feature.orientation === 'antisense') {
+                // Arrowhead at start, so arc starts after the arrowhead
+                arcStart = startAngleRaw + arrowAngleDelta;
+                arcEnd = stopAngleRaw;
+            } else {
+                // Arrowhead at end, so arc ends before the arrowhead
+                arcStart = startAngleRaw;
+                arcEnd = stopAngleRaw - arrowAngleDelta;
+            }
+            if (arcEnd <= arcStart) arcEnd += 2 * Math.PI; // ensure positive sweep
+
             // Create arc path for feature
             const featureArc = d3.arc()
                 .innerRadius(arcRadius)
                 .outerRadius(arcRadius)
-                .startAngle(startAngle)
-                .endAngle(stopAngle);
+                .startAngle(arcStart)
+                .endAngle(arcEnd);
 
             svg.append('path')
                 .attr('d', featureArc)
@@ -78,22 +99,21 @@
                 .attr('stroke', '#666')
                 .attr('stroke-width', 2);
             
-            // Add arrowhead at the end of the feature
-            const arrowSize = 16;
-            const arrowBaseDistance = 8;
-            const arrowEndAngle = stopAngle - Math.PI / 2; // Angle from center to arc end
-            const arcEndX = centerX + arcRadius * Math.cos(arrowEndAngle);
-            const arcEndY = centerY + arcRadius * Math.sin(arrowEndAngle);
+            // Add arrowhead at start or end based on orientation
+            // Arrowhead connects to the arc end (sense) or arc start (antisense)
+            const arrowAngle = (feature.orientation === 'antisense' ? arcStart : arcEnd) - Math.PI / 2;
+            const arcPointX = centerX + arcRadius * Math.cos(arrowAngle);
+            const arcPointY = centerY + arcRadius * Math.sin(arrowAngle);
             
-            // Tangent direction pointing outward (perpendicular to radius)
-            const tangentAngle = arrowEndAngle + Math.PI / 2;
-            const arrowTipX = arcEndX + arrowSize * Math.cos(tangentAngle);
-            const arrowTipY = arcEndY + arrowSize * Math.sin(tangentAngle);
+            // Tangent direction: sense -> clockwise, antisense -> counterclockwise
+            const tangentAngle = arrowAngle + (feature.orientation === 'antisense' ? -Math.PI / 2 : Math.PI / 2);
+            const arrowTipX = arcPointX + arrowSize * Math.cos(tangentAngle);
+            const arrowTipY = arcPointY + arrowSize * Math.sin(tangentAngle);
             
-            const arrowBase1X = arcEndX + arrowBaseDistance * Math.cos(tangentAngle - Math.PI / 3);
-            const arrowBase1Y = arcEndY + arrowBaseDistance * Math.sin(tangentAngle - Math.PI / 3);
-            const arrowBase2X = arcEndX + arrowBaseDistance * Math.cos(tangentAngle + Math.PI / 3);
-            const arrowBase2Y = arcEndY + arrowBaseDistance * Math.sin(tangentAngle + Math.PI / 3);
+            const arrowBase1X = arcPointX + arrowBaseDistance * Math.cos(tangentAngle - Math.PI / 3);
+            const arrowBase1Y = arcPointY + arrowBaseDistance * Math.sin(tangentAngle - Math.PI / 3);
+            const arrowBase2X = arcPointX + arrowBaseDistance * Math.cos(tangentAngle + Math.PI / 3);
+            const arrowBase2Y = arcPointY + arrowBaseDistance * Math.sin(tangentAngle + Math.PI / 3);
 
             // Draw arrowhead lines
             svg.append('line')
@@ -114,15 +134,18 @@
             
             // Connect arc to arrowhead
             svg.append('line')
-                .attr('x1', arcEndX)
-                .attr('y1', arcEndY)
+                .attr('x1', arcPointX)
+                .attr('y1', arcPointY)
                 .attr('x2', arrowTipX)
                 .attr('y2', arrowTipY)
                 .attr('stroke', '#666')
                 .attr('stroke-width', 1.5);
             
             // Add feature label with dogleg connector
-            const midAngle = (startAngle + stopAngle) / 2 - Math.PI / 2;
+            let startForMid = startAngleRaw;
+            let stopForMid = stopAngleRaw;
+            if (stopForMid < startForMid) stopForMid += 2 * Math.PI; // handle wrap
+            const midAngle = ((startForMid + stopForMid) / 2) - Math.PI / 2;
             const labelDistance = radius + 80; // Distance from center to label
             
             // Determine label alignment based on midAngle
@@ -187,6 +210,44 @@
         // Draw all features
         data.features.forEach((feature, index) => {
             drawFeatureArrow(feature, index);
+        });
+        
+        // Add download button functionality
+        document.getElementById('downloadBtn').addEventListener('click', function() {
+            const svgElement = document.querySelector('#visualization svg');
+            
+            // Get the bounding box of all content
+            const bbox = svgElement.getBBox();
+            const padding = 20; // Small amount of whitespace
+            
+            // Create canvas with size based on content
+            const canvasWidth = bbox.width + (padding * 2);
+            const canvasHeight = bbox.height + (padding * 2);
+            
+            const svgData = new XMLSerializer().serializeToString(svgElement);
+            const canvas = document.createElement('canvas');
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = function() {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+                // Draw with offset to crop to content + padding
+                ctx.drawImage(img, -bbox.x + padding, -bbox.y + padding);
+                URL.revokeObjectURL(url);
+                
+                canvas.toBlob(function(blob) {
+                    const link = document.createElement('a');
+                    link.download = data.name + '_vector.png';
+                    link.href = URL.createObjectURL(blob);
+                    link.click();
+                });
+            };
+            img.src = url;
         });
         });
     </script>
