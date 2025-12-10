@@ -1,0 +1,41 @@
+{
+  "name": "pVEC123",
+  "length": 12500,
+  "features": [
+    {
+      "start": 100,
+      "stop": 1500,
+      "name": "promoter"
+    },
+    {
+      "start": 1600,
+      "stop": 3200,
+      "name": "coding_region"
+    },
+    {
+      "start": 3300,
+      "stop": 4000,
+      "name": "terminator"
+    },
+    {
+      "start": 4100,
+      "stop": 5500,
+      "name": "origin"
+    },
+    {
+      "start": 6600,
+      "stop": 7200,
+      "name": "resistance"
+    },
+    {
+      "start": 8300,
+      "stop": 10023,
+      "name": "1234"
+    },
+    {
+      "start": 11055,
+      "stop": 12250,
+      "name": "misc"
+    }
+  ]
+}

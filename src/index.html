@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D3 Vector - DNA Visualization</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div id="visualization"></div>
+    <script>
+        // Load data from JSON file
+        d3.json('data/example_circular.json').then(data => {
+        // Set dimensions
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        // Create SVG container
+        const svg = d3.select('#visualization')
+            .append('svg')
+            .attr('width', width)
+            .attr('height', height);
+
+        // Add a circle in the middle of the page
+        const radius = Math.min(width, height) * 0.30; // 60% of screen
+        const centerX = width / 2;
+        const centerY = height / 2;
+        
+        svg.append('circle')
+            .attr('cx', centerX)
+            .attr('cy', centerY)
+            .attr('r', radius)
+            .attr('fill', 'none')
+            .attr('stroke', '#333')
+            .attr('stroke-width', 2);
+
+        // Add name text
+        svg.append('text')
+            .attr('x', centerX)
+            .attr('y', centerY - 20)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '24px')
+            .attr('font-weight', 'bold')
+            .text(data.name);
+
+        // Add length text
+        svg.append('text')
+            .attr('x', centerX)
+            .attr('y', centerY + 20)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '18px')
+            .text(data.length + ' bp');
+
+        // Draw features as arrows around the circle
+        const arcRadius = radius + 15; // Position of the feature arrows
+        const featureHeight = 20; // Height of each feature arrow
+        
+        // Function to draw an arrow for a feature
+        function drawFeatureArrow(feature, index) {
+            // Calculate angles based on start and stop positions (starting from top, going counter-clockwise)
+            const startFraction = feature.start / data.length;
+            const stopFraction = feature.stop / data.length;
+            const startAngle = startFraction * 2 * Math.PI; // Counter-clockwise from top
+            const stopAngle = stopFraction * 2 * Math.PI;
+            
+            // Create arc path for feature
+            const featureArc = d3.arc()
+                .innerRadius(arcRadius)
+                .outerRadius(arcRadius)
+                .startAngle(startAngle)
+                .endAngle(stopAngle);
+
+            svg.append('path')
+                .attr('d', featureArc)
+                .attr('transform', `translate(${centerX}, ${centerY})`)
+                .attr('fill', 'none')
+                .attr('stroke', '#666')
+                .attr('stroke-width', 2);
+            
+            // Add arrowhead at the end of the feature
+            const arrowSize = 16;
+            const arrowBaseDistance = 8;
+            const arrowEndAngle = stopAngle - Math.PI / 2; // Angle from center to arc end
+            const arcEndX = centerX + arcRadius * Math.cos(arrowEndAngle);
+            const arcEndY = centerY + arcRadius * Math.sin(arrowEndAngle);
+            
+            // Tangent direction pointing outward (perpendicular to radius)
+            const tangentAngle = arrowEndAngle + Math.PI / 2;
+            const arrowTipX = arcEndX + arrowSize * Math.cos(tangentAngle);
+            const arrowTipY = arcEndY + arrowSize * Math.sin(tangentAngle);
+            
+            const arrowBase1X = arcEndX + arrowBaseDistance * Math.cos(tangentAngle - Math.PI / 3);
+            const arrowBase1Y = arcEndY + arrowBaseDistance * Math.sin(tangentAngle - Math.PI / 3);
+            const arrowBase2X = arcEndX + arrowBaseDistance * Math.cos(tangentAngle + Math.PI / 3);
+            const arrowBase2Y = arcEndY + arrowBaseDistance * Math.sin(tangentAngle + Math.PI / 3);
+
+            // Draw arrowhead lines
+            svg.append('line')
+                .attr('x1', arrowBase1X)
+                .attr('y1', arrowBase1Y)
+                .attr('x2', arrowTipX)
+                .attr('y2', arrowTipY)
+                .attr('stroke', '#666')
+                .attr('stroke-width', 1.5);
+
+            svg.append('line')
+                .attr('x1', arrowBase2X)
+                .attr('y1', arrowBase2Y)
+                .attr('x2', arrowTipX)
+                .attr('y2', arrowTipY)
+                .attr('stroke', '#666')
+                .attr('stroke-width', 1.5);
+            
+            // Connect arc to arrowhead
+            svg.append('line')
+                .attr('x1', arcEndX)
+                .attr('y1', arcEndY)
+                .attr('x2', arrowTipX)
+                .attr('y2', arrowTipY)
+                .attr('stroke', '#666')
+                .attr('stroke-width', 1.5);
+            
+            // Add feature label with dogleg connector
+            const midAngle = (startAngle + stopAngle) / 2 - Math.PI / 2;
+            const labelDistance = radius + 80; // Distance from center to label
+            
+            // Determine label alignment based on midAngle
+            // Convert angle to degrees clockwise from top (0-360)
+            let angleDegrees = (midAngle + Math.PI / 2) * 180 / Math.PI;
+            if (angleDegrees < 0) angleDegrees += 360;
+            
+            // Position label with left edge aligned vertically
+            let labelX, textAnchor;
+            if (angleDegrees >= 0 && angleDegrees < 180) {
+                // Upper half - align right (labels start from same X on right)
+                labelX = centerX + radius + 80;
+                textAnchor = 'start';
+            } else {
+                // Lower half - align left (labels end at same X on left)
+                labelX = centerX - radius - 80;
+                textAnchor = 'end';
+            }
+            const labelY = centerY + labelDistance * Math.sin(midAngle);
+            
+            // Connection point at the middle of the arc (middle of feature)
+            const arcMidX = centerX + arcRadius * Math.cos(midAngle);
+            const arcMidY = centerY + arcRadius * Math.sin(midAngle);
+            
+            // First dogleg segment - perpendicular to feature (radial from center)
+            const doglegRadius1 = radius + 50;
+            const dogleg1X = centerX + doglegRadius1 * Math.cos(midAngle);
+            const dogleg1Y = centerY + doglegRadius1 * Math.sin(midAngle);
+            
+            // Second dogleg segment - horizontal from dogleg1 to label
+            const dogleg2X = labelX;
+            const dogleg2Y = dogleg1Y; // Same Y as first dogleg point (horizontal)
+            
+            // Draw dogleg connector lines
+            svg.append('line')
+                .attr('x1', arcMidX)
+                .attr('y1', arcMidY)
+                .attr('x2', dogleg1X)
+                .attr('y2', dogleg1Y)
+                .attr('stroke', '#999')
+                .attr('stroke-width', 1);
+            
+            svg.append('line')
+                .attr('x1', dogleg1X)
+                .attr('y1', dogleg1Y)
+                .attr('x2', dogleg2X)
+                .attr('y2', dogleg2Y)
+                .attr('stroke', '#999')
+                .attr('stroke-width', 1);
+            
+            // Add feature name text - aligned with horizontal dogleg line
+            svg.append('text')
+                .attr('x', labelX + (textAnchor === 'start' ? 5 : -5))
+                .attr('y', dogleg1Y)
+                .attr('text-anchor', textAnchor)
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', '24px')
+                .attr('fill', '#666')
+                .text(feature.name);
+        }
+        
+        // Draw all features
+        data.features.forEach((feature, index) => {
+            drawFeatureArrow(feature, index);
+        });
+        });
+    </script>
+</body>
+</html>
