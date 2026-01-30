@@ -1,14 +1,57 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 import * as d3 from 'd3';
 
-const PlasmidVisualization = ({ 
+const PlasmidVisualization = forwardRef(({ 
     data, 
     width, 
-    height,
-    onDownload 
-}) => {
+    height
+}, ref) => {
     const svgRef = useRef(null);
     const containerRef = useRef(null);
+
+    const handleDownload = () => {
+        if (!svgRef.current || !data) return;
+
+        const svgElement = svgRef.current;
+        
+        // Get the bounding box of all content
+        const bbox = svgElement.getBBox();
+        const padding = 20; // Small amount of whitespace
+        
+        // Create canvas with size based on content
+        const canvasWidth = bbox.width + (padding * 2);
+        const canvasHeight = bbox.height + (padding * 2);
+        
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svgBlob);
+        
+        img.onload = function() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            // Draw with offset to crop to content + padding
+            ctx.drawImage(img, -bbox.x + padding, -bbox.y + padding);
+            URL.revokeObjectURL(url);
+            
+            canvas.toBlob(function(blob) {
+                const link = document.createElement('a');
+                link.download = data.name + '_vector.png';
+                link.href = URL.createObjectURL(blob);
+                link.click();
+            });
+        };
+        img.src = url;
+    };
+
+    // Expose handleDownload to parent component via ref
+    useImperativeHandle(ref, () => ({
+        handleDownload
+    }));
 
     useEffect(() => {
         if (!data || !svgRef.current || !width || !height) return;
@@ -306,49 +349,6 @@ const PlasmidVisualization = ({
 
     }, [data, width, height]);
 
-    const handleDownload = () => {
-        if (!svgRef.current) return;
-
-        const svgElement = svgRef.current;
-        
-        // Get the bounding box of all content
-        const bbox = svgElement.getBBox();
-        const padding = 20; // Small amount of whitespace
-        
-        // Create canvas with size based on content
-        const canvasWidth = bbox.width + (padding * 2);
-        const canvasHeight = bbox.height + (padding * 2);
-        
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-        const canvas = document.createElement('canvas');
-        canvas.width = canvasWidth;
-        canvas.height = canvasHeight;
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(svgBlob);
-        
-        img.onload = function() {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-            // Draw with offset to crop to content + padding
-            ctx.drawImage(img, -bbox.x + padding, -bbox.y + padding);
-            URL.revokeObjectURL(url);
-            
-            canvas.toBlob(function(blob) {
-                const link = document.createElement('a');
-                link.download = data.name + '_vector.png';
-                link.href = URL.createObjectURL(blob);
-                link.click();
-                
-                if (onDownload) {
-                    onDownload();
-                }
-            });
-        };
-        img.src = url;
-    };
-
     return (
         <div ref={containerRef} style={{ position: 'relative', width: '100%', height: '100%' }}>
             <svg 
@@ -358,6 +358,6 @@ const PlasmidVisualization = ({
             />
         </div>
     );
-};
+});
 
 export default PlasmidVisualization;

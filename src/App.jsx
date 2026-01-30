@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PlasmidVisualization from './components/PlasmidVisualization.jsx';
 import './css/styles.css';
 
@@ -8,6 +8,7 @@ function App() {
   const [height, setHeight] = useState(window.innerHeight);
   const [dataText, setDataText] = useState('');
   const [parseError, setParseError] = useState('');
+  const visualizationRef = useRef(null);
 
   // Load initial data
   useEffect(() => {
@@ -37,7 +38,9 @@ function App() {
   };
 
   const handleDownload = () => {
-    // This will be called from the PlasmidVisualization component
+    if (visualizationRef.current) {
+      visualizationRef.current.handleDownload();
+    }
   };
 
   return (
@@ -144,10 +147,10 @@ function App() {
       <div style={{ flex: 1, position: 'relative' }}>
         {data && (
           <PlasmidVisualization 
+            ref={visualizationRef}
             data={data} 
             width={width} 
             height={height}
-            onDownload={handleDownload}
           />
         )}
       </div>

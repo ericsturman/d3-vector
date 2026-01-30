@@ -1,13 +1,16 @@
 # D3 Vector - DNA Visualization
 
-A D3.js-based circular DNA plasmid visualization tool that displays features with directional arrows and labels.
+A React-based circular DNA plasmid visualization tool using D3.js that displays features with directional arrows, labels, and interactive controls.
 
 ## Features
 
-- Circular plasmid visualization
+- Circular plasmid visualization with concentric circles
 - Feature arrows with orientation (sense/antisense)
+- Tick marks every 100bp between circles
 - Interactive labels with dogleg connectors
-- Scalable coordinates based on plasmid length
+- Responsive scaling with intelligent font sizing
+- 3:1 aspect ratio for optimal display
+- Interactive control panel for adjusting dimensions and data
 - PNG export functionality
 
 ## Example
@@ -16,11 +19,25 @@ A D3.js-based circular DNA plasmid visualization tool that displays features wit
 
 *Example visualization of pVEC123 plasmid (12,500 bp) with various features including promoter, coding region, terminator, origin, and resistance markers.*
 
+## Getting Started
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+3. Open your browser to the URL shown (typically http://localhost:5173)
+
 ## Usage
 
-1. Open `src/index.html` in a web browser
-2. The visualization loads data from `src/data/example_circular.json`
-3. Click "Download PNG" to export the visualization
+- Adjust **Width** and **Height** using the input fields in the control panel
+- Edit the **JSON data** in the textarea to visualize different plasmids
+- Click **Download PNG** to export the current visualization
 
 ## Data Format
 
@@ -35,5 +52,26 @@ The JSON data file should contain:
 
 ## Technologies
 
+- React 18
 - D3.js v7
+- Vite (build tool)
 - HTML5 Canvas for image export
+
+## Project Structure
+
+```
+d3-vector/
+├── src/
+│   ├── components/
+│   │   └── PlasmidVisualization.jsx  # Main visualization component
+│   ├── data/
+│   │   └── example_circular.json      # Sample plasmid data
+│   ├── css/
+│   │   └── styles.css                 # Styles
+│   ├── App.jsx                        # Main app with controls
+│   └── main.jsx                       # React entry point
+├── public/
+│   └── data/                          # Public data files
+├── index.html                         # HTML entry point
+└── package.json                       # Dependencies
+```
