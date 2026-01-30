@@ -6,249 +6,129 @@
     <title>D3 Vector - DNA Visualization</title>
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: row-reverse;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+        #controls {
+            width: 300px;
+            padding: 20px;
+            background-color: #f5f5f5;
+            overflow-y: auto;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        #controls h3 {
+            margin-top: 0;
+        }
+        #controls label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        #controls input[type="number"],
+        #controls textarea {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        #controls textarea {
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        #controls .error {
+            color: red;
+            font-size: 12px;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+        #visualization-container {
+            flex: 1;
+            position: relative;
+        }
+    </style>
 </head>
 <body>
-    <button id="downloadBtn" style="position: absolute; top: 10px; right: 10px; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; z-index: 1000;">Download PNG</button>
-    <div id="visualization"></div>
+    <div id="controls">
+        <h3>Controls</h3>
+        
+        <label for="widthInput">Width:</label>
+        <input type="number" id="widthInput" />
+        
+        <label for="heightInput">Height:</label>
+        <input type="number" id="heightInput" />
+        
+        <label for="dataInput">Plasmid Data (JSON):</label>
+        <textarea id="dataInput" rows="20"></textarea>
+        <div id="parseError" class="error"></div>
+        
+        <button id="downloadBtn" style="width: 100%; padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin-top: 10px;">Download PNG</button>
+    </div>
+    
+    <div id="visualization-container">
+        <div id="visualization"></div>
+    </div>
     <script>
-        // Load data from JSON file
+        // Note: This HTML file contains the control panel.
+        // The actual visualization is in the PlasmidVisualization.jsx React component.
+        // To use this with React, you'll need to set up a React app and import the component.
+        
+        let currentData = null;
+        let currentWidth = window.innerWidth - 300; // Subtract sidebar width
+        let currentHeight = window.innerHeight;
+
+        // Set initial values in inputs
+        document.getElementById('widthInput').value = currentWidth;
+        document.getElementById('heightInput').value = currentHeight;
+
+        // Load initial data from JSON file
         d3.json('data/example_circular.json').then(data => {
-        // Set dimensions
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
-        // Create SVG container
-        const svg = d3.select('#visualization')
-            .append('svg')
-            .attr('width', width)
-            .attr('height', height);
-
-        // Add a circle in the middle of the page
-        const radius = Math.min(width, height) * 0.30; // 60% of screen
-        const centerX = width / 2;
-        const centerY = height / 2;
-        
-        svg.append('circle')
-            .attr('cx', centerX)
-            .attr('cy', centerY)
-            .attr('r', radius)
-            .attr('fill', 'none')
-            .attr('stroke', '#333')
-            .attr('stroke-width', 2);
-
-        // Add name text
-        svg.append('text')
-            .attr('x', centerX)
-            .attr('y', centerY - 20)
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '24px')
-            .attr('font-weight', 'bold')
-            .text(data.name);
-
-        // Add length text
-        svg.append('text')
-            .attr('x', centerX)
-            .attr('y', centerY + 20)
-            .attr('text-anchor', 'middle')
-            .attr('font-size', '18px')
-            .text(data.length + ' bp');
-
-        // Draw features as arrows around the circle
-        const arcRadius = radius + 15; // Position of the feature arrows
-        const featureHeight = 20; // Height of each feature arrow
-        
-        // Function to draw an arrow for a feature
-        function drawFeatureArrow(feature, index) {
-            // Calculate angles based on start and stop positions (starting from top, going counter-clockwise)
-            const startFraction = feature.start / data.length;
-            const stopFraction = feature.stop / data.length;
-            const startAngleRaw = startFraction * 2 * Math.PI; // Counter-clockwise from top
-            const stopAngleRaw = stopFraction * 2 * Math.PI;
-
-            // Fixed arrowhead size for all features
-            const arrowSize = 12;
-            const arrowBaseDistance = arrowSize * 0.4;
-            
-            // Calculate how much angle the arrowhead takes up
-            const arrowAngleDelta = arrowSize / (arcRadius * 2 * Math.PI) * 2 * Math.PI;
-
-            // Arc needs to make room for arrowhead within feature span
-            let arcStart, arcEnd;
-            if (feature.orientation === 'antisense') {
-                // Arrowhead at start, so arc starts after the arrowhead
-                arcStart = startAngleRaw + arrowAngleDelta;
-                arcEnd = stopAngleRaw;
-            } else {
-                // Arrowhead at end, so arc ends before the arrowhead
-                arcStart = startAngleRaw;
-                arcEnd = stopAngleRaw - arrowAngleDelta;
-            }
-            if (arcEnd <= arcStart) arcEnd += 2 * Math.PI; // ensure positive sweep
-
-            // Create arc path for feature
-            const featureArc = d3.arc()
-                .innerRadius(arcRadius)
-                .outerRadius(arcRadius)
-                .startAngle(arcStart)
-                .endAngle(arcEnd);
-
-            svg.append('path')
-                .attr('d', featureArc)
-                .attr('transform', `translate(${centerX}, ${centerY})`)
-                .attr('fill', 'none')
-                .attr('stroke', '#666')
-                .attr('stroke-width', 2);
-            
-            // Add arrowhead at start or end based on orientation
-            // Arrowhead connects to the arc end (sense) or arc start (antisense)
-            const arrowAngle = (feature.orientation === 'antisense' ? arcStart : arcEnd) - Math.PI / 2;
-            const arcPointX = centerX + arcRadius * Math.cos(arrowAngle);
-            const arcPointY = centerY + arcRadius * Math.sin(arrowAngle);
-            
-            // Tangent direction: sense -> clockwise, antisense -> counterclockwise
-            const tangentAngle = arrowAngle + (feature.orientation === 'antisense' ? -Math.PI / 2 : Math.PI / 2);
-            const arrowTipX = arcPointX + arrowSize * Math.cos(tangentAngle);
-            const arrowTipY = arcPointY + arrowSize * Math.sin(tangentAngle);
-            
-            const arrowBase1X = arcPointX + arrowBaseDistance * Math.cos(tangentAngle - Math.PI / 3);
-            const arrowBase1Y = arcPointY + arrowBaseDistance * Math.sin(tangentAngle - Math.PI / 3);
-            const arrowBase2X = arcPointX + arrowBaseDistance * Math.cos(tangentAngle + Math.PI / 3);
-            const arrowBase2Y = arcPointY + arrowBaseDistance * Math.sin(tangentAngle + Math.PI / 3);
-
-            // Draw arrowhead lines
-            svg.append('line')
-                .attr('x1', arrowBase1X)
-                .attr('y1', arrowBase1Y)
-                .attr('x2', arrowTipX)
-                .attr('y2', arrowTipY)
-                .attr('stroke', '#666')
-                .attr('stroke-width', 1.5);
-
-            svg.append('line')
-                .attr('x1', arrowBase2X)
-                .attr('y1', arrowBase2Y)
-                .attr('x2', arrowTipX)
-                .attr('y2', arrowTipY)
-                .attr('stroke', '#666')
-                .attr('stroke-width', 1.5);
-            
-            // Connect arc to arrowhead
-            svg.append('line')
-                .attr('x1', arcPointX)
-                .attr('y1', arcPointY)
-                .attr('x2', arrowTipX)
-                .attr('y2', arrowTipY)
-                .attr('stroke', '#666')
-                .attr('stroke-width', 1.5);
-            
-            // Add feature label with dogleg connector
-            let startForMid = startAngleRaw;
-            let stopForMid = stopAngleRaw;
-            if (stopForMid < startForMid) stopForMid += 2 * Math.PI; // handle wrap
-            const midAngle = ((startForMid + stopForMid) / 2) - Math.PI / 2;
-            const labelDistance = radius + 80; // Distance from center to label
-            
-            // Determine label alignment based on midAngle
-            // Convert angle to degrees clockwise from top (0-360)
-            let angleDegrees = (midAngle + Math.PI / 2) * 180 / Math.PI;
-            if (angleDegrees < 0) angleDegrees += 360;
-            
-            // Position label with left edge aligned vertically
-            let labelX, textAnchor;
-            if (angleDegrees >= 0 && angleDegrees < 180) {
-                // Upper half - align right (labels start from same X on right)
-                labelX = centerX + radius + 80;
-                textAnchor = 'start';
-            } else {
-                // Lower half - align left (labels end at same X on left)
-                labelX = centerX - radius - 80;
-                textAnchor = 'end';
-            }
-            const labelY = centerY + labelDistance * Math.sin(midAngle);
-            
-            // Connection point at the middle of the arc (middle of feature)
-            const arcMidX = centerX + arcRadius * Math.cos(midAngle);
-            const arcMidY = centerY + arcRadius * Math.sin(midAngle);
-            
-            // First dogleg segment - perpendicular to feature (radial from center)
-            const doglegRadius1 = radius + 50;
-            const dogleg1X = centerX + doglegRadius1 * Math.cos(midAngle);
-            const dogleg1Y = centerY + doglegRadius1 * Math.sin(midAngle);
-            
-            // Second dogleg segment - horizontal from dogleg1 to label
-            const dogleg2X = labelX;
-            const dogleg2Y = dogleg1Y; // Same Y as first dogleg point (horizontal)
-            
-            // Draw dogleg connector lines
-            svg.append('line')
-                .attr('x1', arcMidX)
-                .attr('y1', arcMidY)
-                .attr('x2', dogleg1X)
-                .attr('y2', dogleg1Y)
-                .attr('stroke', '#999')
-                .attr('stroke-width', 1);
-            
-            svg.append('line')
-                .attr('x1', dogleg1X)
-                .attr('y1', dogleg1Y)
-                .attr('x2', dogleg2X)
-                .attr('y2', dogleg2Y)
-                .attr('stroke', '#999')
-                .attr('stroke-width', 1);
-            
-            // Add feature name text - aligned with horizontal dogleg line
-            svg.append('text')
-                .attr('x', labelX + (textAnchor === 'start' ? 5 : -5))
-                .attr('y', dogleg1Y)
-                .attr('text-anchor', textAnchor)
-                .attr('dominant-baseline', 'middle')
-                .attr('font-size', '24px')
-                .attr('fill', '#666')
-                .text(feature.name);
-        }
-        
-        // Draw all features
-        data.features.forEach((feature, index) => {
-            drawFeatureArrow(feature, index);
+            currentData = data;
+            document.getElementById('dataInput').value = JSON.stringify(data, null, 2);
+            // TODO: Integrate with React component
+            console.log('Data loaded:', data);
+            console.log('Width:', currentWidth, 'Height:', currentHeight);
         });
-        
-        // Add download button functionality
+
+        // Handle width changes
+        document.getElementById('widthInput').addEventListener('input', function(e) {
+            currentWidth = parseInt(e.target.value) || (window.innerWidth - 300);
+            // TODO: Update React component with new width
+            console.log('Width changed to:', currentWidth);
+        });
+
+        // Handle height changes
+        document.getElementById('heightInput').addEventListener('input', function(e) {
+            currentHeight = parseInt(e.target.value) || window.innerHeight;
+            // TODO: Update React component with new height
+            console.log('Height changed to:', currentHeight);
+        });
+
+        // Handle data changes
+        document.getElementById('dataInput').addEventListener('input', function(e) {
+            const errorDiv = document.getElementById('parseError');
+            try {
+                currentData = JSON.parse(e.target.value);
+                errorDiv.textContent = '';
+                // TODO: Update React component with new data
+                console.log('Data updated:', currentData);
+            } catch (error) {
+                errorDiv.textContent = 'Invalid JSON: ' + error.message;
+            }
+        });
+
+        // Download button handler
         document.getElementById('downloadBtn').addEventListener('click', function() {
-            const svgElement = document.querySelector('#visualization svg');
-            
-            // Get the bounding box of all content
-            const bbox = svgElement.getBBox();
-            const padding = 20; // Small amount of whitespace
-            
-            // Create canvas with size based on content
-            const canvasWidth = bbox.width + (padding * 2);
-            const canvasHeight = bbox.height + (padding * 2);
-            
-            const svgData = new XMLSerializer().serializeToString(svgElement);
-            const canvas = document.createElement('canvas');
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            const ctx = canvas.getContext('2d');
-            const img = new Image();
-            const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-            const url = URL.createObjectURL(svgBlob);
-            
-            img.onload = function() {
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-                // Draw with offset to crop to content + padding
-                ctx.drawImage(img, -bbox.x + padding, -bbox.y + padding);
-                URL.revokeObjectURL(url);
-                
-                canvas.toBlob(function(blob) {
-                    const link = document.createElement('a');
-                    link.download = data.name + '_vector.png';
-                    link.href = URL.createObjectURL(blob);
-                    link.click();
-                });
-            };
-            img.src = url;
-        });
+            // TODO: Call download method on React component
+            console.log('Download button clicked');
         });
     </script>
 </body>
