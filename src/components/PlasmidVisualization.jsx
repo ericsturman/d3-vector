@@ -61,9 +61,9 @@ const PlasmidVisualization = forwardRef(({
 
         const svg = d3.select(svgRef.current);
 
-        // Enforce 3:1 aspect ratio (width should be 3x height)
+        // Enforce a square-ish aspect ratio for the vector itself
         // Calculate effective dimensions based on aspect ratio
-        const targetAspectRatio = 3; // width / height = 3
+        const targetAspectRatio = 1; // width / height = 1
         let effectiveWidth, effectiveHeight;
         
         if (width / height > targetAspectRatio) {
@@ -129,12 +129,14 @@ const PlasmidVisualization = forwardRef(({
                 .attr('stroke-width', 1.5);
         }
 
+        const textScale = 2.25;
+
         // Add name text
         svg.append('text')
             .attr('x', centerX)
             .attr('y', centerY + 20 * scaleFactor)
             .attr('text-anchor', 'middle')
-            .attr('font-size', (24 * scaleFactor) + 'px')
+            .attr('font-size', (20 * scaleFactor * textScale) + 'px')
             .attr('font-family', 'Arial, Helvetica, sans-serif')
             .text(data.name);
 
@@ -143,7 +145,7 @@ const PlasmidVisualization = forwardRef(({
             .attr('x', centerX)
             .attr('y', centerY - 20 * scaleFactor)
             .attr('text-anchor', 'middle')
-            .attr('font-size', (24 * scaleFactor) + 'px')
+            .attr('font-size', (20 * scaleFactor * textScale) + 'px')
             .attr('font-family', 'Arial, Helvetica, sans-serif')
             .text(data.length + ' bp');
 
@@ -161,15 +163,61 @@ const PlasmidVisualization = forwardRef(({
         );
         
         // Estimate text width (rough approximation: 0.6 * fontSize * numCharacters)
-        const baseFontSize = 24 * scaleFactor;
-        const estimatedTextWidth = baseFontSize * 0.6 * longestLabel.length;
+        const baseLabelFontSize = 30 * scaleFactor;
+        const estimatedTextWidth = baseLabelFontSize * 0.6 * longestLabel.length;
         
         // Calculate label font scale factor
         const labelFontScale = estimatedTextWidth > availableLabelSpace 
             ? availableLabelSpace / estimatedTextWidth 
             : 1;
-        const labelFontSize = baseFontSize * labelFontScale;
+        const labelFontSize = baseLabelFontSize * labelFontScale * textScale;
+
+        // Match center text size to label text size
+        svg.selectAll('text')
+            .filter(function() {
+                const textContent = d3.select(this).text();
+                return textContent === data.name || textContent === data.length + ' bp';
+            })
+            .attr('font-size', labelFontSize + 'px')
+            .attr('y', function() {
+                const textContent = d3.select(this).text();
+                const offset = labelFontSize;
+                return textContent === data.name ? centerY + offset : centerY - offset;
+            });
         
+        const labelInfos = [];
+
+        const labelAreaTop = 20 * scaleFactor;
+        const labelAreaBottom = height - 20 * scaleFactor;
+        const minLabelSpacing = Math.max(12 * scaleFactor, labelFontSize * 1.25);
+
+        const resolveLabelCollisions = (labels) => {
+            if (labels.length === 0) return;
+
+            labels.sort((a, b) => a.desiredY - b.desiredY);
+
+            labels[0].y = Math.max(labels[0].desiredY, labelAreaTop);
+            for (let i = 1; i < labels.length; i++) {
+                labels[i].y = Math.max(labels[i].desiredY, labels[i - 1].y + minLabelSpacing);
+            }
+
+            let overflow = labels[labels.length - 1].y - labelAreaBottom;
+            if (overflow > 0) {
+                for (let i = 0; i < labels.length; i++) {
+                    labels[i].y -= overflow;
+                }
+                for (let i = labels.length - 2; i >= 0; i--) {
+                    labels[i].y = Math.min(labels[i].y, labels[i + 1].y - minLabelSpacing);
+                }
+                const underflow = labelAreaTop - labels[0].y;
+                if (underflow > 0) {
+                    for (let i = 0; i < labels.length; i++) {
+                        labels[i].y += underflow;
+                    }
+                }
+            }
+        };
+
         // Function to draw an arrow for a feature
         function drawFeatureArrow(feature, index) {
             // Calculate angles based on start and stop positions (starting from top, going counter-clockwise)
@@ -275,77 +323,151 @@ const PlasmidVisualization = forwardRef(({
                 .attr('stroke', '#000')
                 .attr('stroke-width', 2.25);
             
-            // Add feature label with dogleg connector
+            // Capture feature label placement details for collision resolution
             let startForMid = startAngleRaw;
             let stopForMid = stopAngleRaw;
             if (stopForMid < startForMid) stopForMid += 2 * Math.PI; // handle wrap
             const midAngle = ((startForMid + stopForMid) / 2) - Math.PI / 2;
             const labelDistance = radius + 80 * scaleFactor; // Distance from center to label
-            
-            // Determine label alignment based on midAngle
-            // Convert angle to degrees clockwise from top (0-360)
-            let angleDegrees = (midAngle + Math.PI / 2) * 180 / Math.PI;
-            if (angleDegrees < 0) angleDegrees += 360;
-            
-            // Position label with left edge aligned vertically
+
+            // Determine label side based on feature center
+            const isRightSide = Math.cos(midAngle) >= 0;
+
+            // Position label with slight curvature-following offset
+            const baseOffset = 80 * scaleFactor;
+            const curvatureShift = Math.pow(Math.abs(Math.sin(midAngle)), 3) * (180 * scaleFactor);
             let labelX, textAnchor;
-            if (angleDegrees >= 0 && angleDegrees < 180) {
-                // Upper half - align right (labels start from same X on right)
-                labelX = centerX + radius + 80 * scaleFactor;
+            if (isRightSide) {
+                // Shift right-side labels slightly left near top/bottom
+                labelX = centerX + radius + (baseOffset - curvatureShift);
                 textAnchor = 'start';
             } else {
-                // Lower half - align left (labels end at same X on left)
-                labelX = centerX - radius - 80 * scaleFactor;
+                // Shift left-side labels slightly right near top/bottom
+                labelX = centerX - radius - (baseOffset - curvatureShift);
                 textAnchor = 'end';
             }
-            const labelY = centerY + labelDistance * Math.sin(midAngle);
-            
             // Connection point at the middle of the arc (middle of feature)
             const arcMidX = centerX + arcRadius * Math.cos(midAngle);
             const arcMidY = centerY + arcRadius * Math.sin(midAngle);
             
             // First dogleg segment - perpendicular to feature (radial from center)
             const doglegRadius1 = radius + 50 * scaleFactor;
-            const dogleg1X = centerX + doglegRadius1 * Math.cos(midAngle);
             const dogleg1Y = centerY + doglegRadius1 * Math.sin(midAngle);
+
+            const desiredY = dogleg1Y;
             
-            // Second dogleg segment - horizontal from dogleg1 to label
-            const dogleg2X = labelX;
-            const dogleg2Y = dogleg1Y; // Same Y as first dogleg point (horizontal)
-            
-            // Draw dogleg connector lines
-            svg.append('line')
-                .attr('x1', arcMidX)
-                .attr('y1', arcMidY)
-                .attr('x2', dogleg1X)
-                .attr('y2', dogleg1Y)
-                .attr('stroke', '#000')
-                .attr('stroke-width', 2.25);
-            
-            svg.append('line')
-                .attr('x1', dogleg1X)
-                .attr('y1', dogleg1Y)
-                .attr('x2', dogleg2X)
-                .attr('y2', dogleg2Y)
-                .attr('stroke', '#000')
-                .attr('stroke-width', 2.25);
-            
-            // Add feature name text - aligned with horizontal dogleg line
-            svg.append('text')
-                .attr('x', labelX + (textAnchor === 'start' ? 5 : -5) * scaleFactor)
-                .attr('y', dogleg1Y)
-                .attr('text-anchor', textAnchor)
-                .attr('dominant-baseline', 'middle')
-                .attr('font-size', labelFontSize + 'px')
-                .attr('font-family', 'Arial, Helvetica, sans-serif')
-                .attr('fill', '#000')
-                .text(feature.name);
+            labelInfos.push({
+                feature,
+                arcMidX,
+                arcMidY,
+                midAngle,
+                baseDoglegRadius: doglegRadius1,
+                labelX,
+                textAnchor,
+                desiredY,
+                side: isRightSide ? 'right' : 'left'
+            });
         }
         
         // Draw all features
         data.features.forEach((feature, index) => {
             drawFeatureArrow(feature, index);
         });
+
+        const leftLabels = labelInfos.filter(label => label.side === 'left');
+        const rightLabels = labelInfos.filter(label => label.side === 'right');
+
+        resolveLabelCollisions(leftLabels);
+        resolveLabelCollisions(rightLabels);
+
+        const adjustTopConnectorClearance = (labels) => {
+            const minDoglegRadius = radius + 20 * scaleFactor;
+            const labelHalfHeight = labelFontSize * 0.6;
+            const minClearance = labelFontSize * 0.4;
+
+            const sorted = labels
+                .slice()
+                .sort((a, b) => (a.y ?? a.desiredY) - (b.y ?? b.desiredY));
+
+            for (let i = 1; i < sorted.length; i++) {
+                const label = sorted[i];
+                const labelY = label.y ?? label.desiredY;
+                if (labelY >= centerY) continue; // only top half
+
+                const above = sorted[i - 1];
+                const aboveY = above.y ?? above.desiredY;
+                const aboveBottom = aboveY + labelHalfHeight;
+                const targetMinY = aboveBottom + minClearance;
+
+                const baseRadius = label.baseDoglegRadius;
+                const baseDoglegY = centerY + baseRadius * Math.sin(label.midAngle);
+
+                if (baseDoglegY < targetMinY) {
+                    const sinAngle = Math.sin(label.midAngle);
+                    if (sinAngle !== 0) {
+                        const desiredRadius = (targetMinY - centerY) / sinAngle;
+                        const clampedRadius = Math.max(minDoglegRadius, Math.min(baseRadius, desiredRadius));
+                        label.connectorRadius = clampedRadius;
+                    }
+                }
+            }
+        };
+
+        adjustTopConnectorClearance(leftLabels);
+        adjustTopConnectorClearance(rightLabels);
+
+        const drawLabel = (label) => {
+            const labelY = label.y ?? label.desiredY;
+            const doglegRadius = label.connectorRadius ?? label.baseDoglegRadius;
+            const dogleg1X = centerX + doglegRadius * Math.cos(label.midAngle);
+            const dogleg1Y = centerY + doglegRadius * Math.sin(label.midAngle);
+            const doglegMidX = dogleg1X;
+            const verticalDelta = Math.abs(dogleg1Y - labelY);
+            const verticalThreshold = Math.max(6 * scaleFactor, minLabelSpacing * 0.25);
+            const effectiveLabelY = verticalDelta < verticalThreshold ? dogleg1Y : labelY;
+            const doglegMidY = effectiveLabelY;
+
+            // Draw dogleg connector lines
+            svg.append('line')
+                .attr('x1', label.arcMidX)
+                .attr('y1', label.arcMidY)
+                .attr('x2', dogleg1X)
+                .attr('y2', dogleg1Y)
+                .attr('stroke', '#000')
+                .attr('stroke-width', 2.25);
+
+            if (Math.abs(dogleg1Y - doglegMidY) > 0.5) {
+                svg.append('line')
+                    .attr('x1', dogleg1X)
+                    .attr('y1', dogleg1Y)
+                    .attr('x2', doglegMidX)
+                    .attr('y2', doglegMidY)
+                    .attr('stroke', '#000')
+                    .attr('stroke-width', 2.25);
+            }
+
+            svg.append('line')
+                .attr('x1', doglegMidX)
+                .attr('y1', doglegMidY)
+                .attr('x2', label.labelX)
+                .attr('y2', doglegMidY)
+                .attr('stroke', '#000')
+                .attr('stroke-width', 2.25);
+
+            // Add feature name text
+            svg.append('text')
+                .attr('x', label.labelX + (label.textAnchor === 'start' ? 5 : -5) * scaleFactor)
+                .attr('y', doglegMidY)
+                .attr('text-anchor', label.textAnchor)
+                .attr('dominant-baseline', 'middle')
+                .attr('font-size', labelFontSize + 'px')
+                .attr('font-family', 'Arial, Helvetica, sans-serif')
+                .attr('fill', '#000')
+                .text(label.feature.name);
+        };
+
+        leftLabels.forEach(drawLabel);
+        rightLabels.forEach(drawLabel);
 
     }, [data, width, height]);
 

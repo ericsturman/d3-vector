@@ -1,0 +1,234 @@
+{
+    "name": "XX-XXXXXXXXXXXXXXX",
+    "length": 17368,
+    "features": [
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 6,
+            "stop": 39,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 54,
+            "stop": 894,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 895,
+            "stop": 974,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 975,
+            "stop": 1452,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 1462,
+            "stop": 1689,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 1690,
+            "stop": 3057,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 3073,
+            "stop": 3325,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 3332,
+            "stop": 4208,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 4209,
+            "stop": 4286,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 4287,
+            "stop": 5339,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 5352,
+            "stop": 5381,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 5382,
+            "stop": 9062,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9063,
+            "stop": 9092,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9096,
+            "stop": 9393,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9411,
+            "stop": 9610,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9614,
+            "stop": 9634,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9635,
+            "stop": 9657,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9658,
+            "stop": 9678,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9720,
+            "stop": 9753,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 9760,
+            "stop": 10610,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 10611,
+            "stop": 10764,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 10765,
+            "stop": 11765,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 11772,
+            "stop": 11975,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 11976,
+            "stop": 12512,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 12527,
+            "stop": 13024,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 13031,
+            "stop": 13387,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 13398,
+            "stop": 13529,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 13532,
+            "stop": 13589,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 13590,
+            "stop": 14378,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 14379,
+            "stop": 14420,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 14460,
+            "stop": 14729,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 14781,
+            "stop": 14819,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 14955,
+            "stop": 15539,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 15778,
+            "stop": 15969,
+            "orientation": "antisense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 16004,
+            "stop": 16093,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 16203,
+            "stop": 16313,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 16443,
+            "stop": 16839,
+            "orientation": "sense"
+        },
+        {
+            "name": "XXXXXXXXXXXXXXXXXXXX",
+            "start": 16926,
+            "stop": 17367,
+            "orientation": "antisense"
+        }
+    ]
+}

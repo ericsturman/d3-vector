@@ -12,7 +12,7 @@ function App() {
 
   // Load initial data
   useEffect(() => {
-    fetch('/data/example_circular.json')
+    fetch('/data/test.json')
       .then(response => response.json())
       .then(jsonData => {
         setData(jsonData);

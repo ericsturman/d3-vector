@@ -65,7 +65,7 @@ d3-vector/
 │   ├── components/
 │   │   └── PlasmidVisualization.jsx  # Main visualization component
 │   ├── data/
-│   │   └── example_circular.json      # Sample plasmid data
+│   │   └── test.json                  # Sample plasmid data (default)
 │   ├── css/
 │   │   └── styles.css                 # Styles
 │   ├── App.jsx                        # Main app with controls

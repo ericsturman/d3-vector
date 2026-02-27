@@ -90,7 +90,7 @@
         document.getElementById('heightInput').value = currentHeight;
 
         // Load initial data from JSON file
-        d3.json('data/example_circular.json').then(data => {
+        d3.json('data/test.json').then(data => {
             currentData = data;
             document.getElementById('dataInput').value = JSON.stringify(data, null, 2);
             // TODO: Integrate with React component
